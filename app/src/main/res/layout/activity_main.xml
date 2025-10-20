@@ -4,7 +4,18 @@
 	android:orientation="vertical"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
-	<WebView android:id="@+id/webView"
+	<!-- horizontal progress bar to reflect page load progress (replaces deprecated setProgress) -->
+	<ProgressBar
+		android:id="@+id/progressBar"
+		style="?android:attr/progressBarStyleHorizontal"
 		android:layout_width="match_parent"
-		android:layout_height="match_parent" />
+		android:layout_height="4dp"
+		android:max="100"
+		android:visibility="gone"/>
+
+	<WebView
+		android:id="@+id/webView"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1" />
 </LinearLayout>

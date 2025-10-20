@@ -65701,8 +65701,11 @@ var AndroidApp = window.AndroidApp || function () {
 var EventEmitter = require('events').EventEmitter;
 
 var ee = new EventEmitter();
-AndroidApp.tagDetected = function () {
-	ee.emit('tagDetected');
+// Use a separate callbacks namespace so native code calls a pure JS function
+// instead of attempting to overwrite properties on the Java bridge object.
+window.AndroidAppCallbacks = window.AndroidAppCallbacks || {};
+AndroidAppCallbacks.tagDetected = function () {
+  ee.emit('tagDetected');
 };
 
 var API = function (_EventEmitter) {

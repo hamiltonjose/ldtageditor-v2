@@ -1,20 +1,26 @@
-apply plugin: 'com.android.application'
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
 
 android {
+    namespace = 'com.ld.tageditor'
     signingConfigs {
         debug {
-            storeFile file('/home/naleo/.keystore')
+            storeFile file('C:/Users/hamil/.keystore')
             storePassword '19monkeys'
             keyAlias 'key0'
             keyPassword '19monkeys'
         }
     }
-    compileSdk 31
+    compileSdk = 33
 
     defaultConfig {
-        applicationId "com.ld.tageditor"
-        minSdk 20
-        targetSdk 23
+        applicationId = "com.ld.tageditor"
+        minSdk = 20
+        targetSdk = 33
         versionCode 1
         versionName "1.1"
 
@@ -22,34 +28,41 @@ android {
             useSupportLibrary = true
         }
 
-        def commit = 'git rev-parse --short HEAD'.execute().text.trim()
-        buildConfigField "String", "COMMIT", "\""+commit+"\""
-        project.archivesBaseName = "LDTagEditor-" + commit
+    def commit = 'git rev-parse --short HEAD'.execute().text.trim()
+    buildConfigField("String", "COMMIT", "\""+commit+"\"")
+    // archivesName is removed in newer AGP; set archivesBaseName via project property if needed
+    }
+
+    // enable generation of BuildConfig for custom buildConfigField entries
+    buildFeatures {
+        buildConfig = true
     }
 
     splits {
         abi {
-            enable true
+            enable = true
             reset()
-            include "arm64-v8a"
-            universalApk false
+            //include "arm64-v8a"
+            universalApk true
         }
     }
 
     buildTypes {
         release {
-            minifyEnabled true
+            //minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             initWith release
             debuggable true
+            signingConfig signingConfigs.debug
             try {
                 def keystoreProps = new Properties()
                 keystoreProps.load(new FileInputStream(rootProject.file("keystore.properties")))
                 buildTypes.debug.signingConfig signingConfigs.debug
                 debug {
-                    storeFile '/home/naleo/.keystore'
+                    // Use local Windows keystore path if available
+                    storeFile file('C:/Users/hamil/.keystore')
                     keyAlias 'key0'
                     keyPassword '19monkeys'
                     storePassword '19monkeys'
@@ -59,20 +72,31 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_17
+        }
+    }
+    // Use Kotlin's JVM toolchain to compile with a compatible JDK (helps when system JAVA_HOME is newer)
+    kotlin {
+        jvmToolchain(17)
     }
     lint {
         abortOnError false
     }
 
-    applicationVariants.all { variant ->
-        variant.outputs[0].outputFileName = project.archivesBaseName + ".apk"
-    }
+    // Use the new variant API to set output filename if needed (kept default for now)
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'androidx.webkit:webkit:1.4.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
 }

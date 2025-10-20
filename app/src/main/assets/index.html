@@ -25,11 +25,11 @@
             <input type="radio" name="type" ng-model="main.token.character" ng-value="false">
             Vehicle/Gadget
           </label>
-        </div>			
+        </div>
         <div>
           <label>ID:</label>
-          <select ng-model="main.token.id" class="form-control" ng-options="char.id as char.name for char in main.charmap" ng-show="main.token.character"></select>
-          <select ng-model="main.token.id" class="form-control" ng-options="token.id as token.name for token in main.tokenmap" ng-hide="main.token.character"></select>
+          <select ng-model="main.token.id" class="form-control" ng-options="char.id as char.name for char in main.charmap | orderBy:'name'" ng-show="main.token.character"></select>
+          <select ng-model="main.token.id" class="form-control" ng-options="token.id as token.name for token in main.tokenmap | orderBy:'name'" ng-hide="main.token.character"></select>
         </div>
         <div ng-hide="main.token.character">
           <label class="checkbox-inline" style="margin-top: 10px;">* = rebuild</label>
