@@ -1,7 +1,8 @@
 package com.ld.tageditor;
 
-import android.nfc.tech.MifareUltralight;
 import android.nfc.tech.NfcA;
+import android.content.Intent;
+import android.nfc.Tag;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
@@ -20,7 +21,33 @@ public class JSAPI {
     @JavascriptInterface
     public String readTag(byte page) {
 //        MifareUltralight mifare = MifareUltralight.get(this.activity.tag);
+        if (this.activity == null) {
+            Log.w("JSAPI", "readTag called but activity is null");
+            return "";
+        }
+        // If activity.tag is null, try to recover it from the current activity intent (onNewIntent sets it)
+        if (this.activity.tag == null) {
+            Log.w("JSAPI", "activity.tag is null; attempting to recover from activity.getIntent()...");
+            Intent intent = this.activity.getIntent();
+            if (intent != null) {
+                Tag t = (Tag) intent.getParcelableExtra("android.nfc.extra.TAG");
+                if (t != null) {
+                    this.activity.tag = t;
+                    Log.i("JSAPI", "Recovered activity.tag from intent");
+                } else {
+                    Log.w("JSAPI", "No tag found on activity intent");
+                    return "";
+                }
+            } else {
+                Log.w("JSAPI", "activity.getIntent() returned null");
+                return "";
+            }
+        }
         NfcA nfcA = NfcA.get(this.activity.tag);
+        if (nfcA == null) {
+            Log.w("JSAPI", "NfcA.get returned null for current tag");
+            return null;
+        }
         try {
             Log.i("JSAPI", "Connecting");
             nfcA.connect();
@@ -40,11 +67,9 @@ public class JSAPI {
             Log.i("JSAPI", encodeToString);
             return encodeToString;
         } catch (IOException e) {
-            Log.e("JSAPI", "IOException while writing MifareUltralight message...", e);
-            Log.e("JSAPI", e.getMessage());
-            if (nfcA != null) {
-                return null;
-            }
+            Log.e("JSAPI", "IOException while transceiving with NfcA...", e);
+            if (e.getMessage() != null) Log.e("JSAPI", e.getMessage());
+            return "";
         } finally {
             if (nfcA!= null) {
                 try {
@@ -54,13 +79,24 @@ public class JSAPI {
                 }
             }
         }
-        return null;
     }
 
     @JavascriptInterface
     public boolean writeTag(byte page, String payload) {
         byte[] data = Base64.decode(payload, 0);
+        if (this.activity == null) {
+            Log.w("JSAPI", "writeTag called but activity is null");
+            return false;
+        }
+        if (this.activity.tag == null) {
+            Log.w("JSAPI", "writeTag called but no tag is available (activity.tag is null)");
+            return false;
+        }
         NfcA nfca = NfcA.get(this.activity.tag);
+        if (nfca == null) {
+            Log.w("JSAPI", "NfcA.get returned null for current tag (write)");
+            return false;
+        }
 //        MifareUltralight ultralight = MifareUltralight.get(this.activity.tag);
         try {
             Log.i("JSAPI", "Connecting");
@@ -85,26 +121,27 @@ public class JSAPI {
                 return false;
             }
         } catch (IOException e2) {
-            Log.e("JSAPI", "IOException while closing MifareUltralight...", e2);
+            Log.e("JSAPI", "IOException during write/transceive...", e2);
             try {
-                Log.i("JSAPI", "Closing");
-                nfca.close();
-                Log.i("JSAPI", "Closed");
-                return true;
-            } catch (IOException e22) {
-                Log.e("JSAPI", "IOException while closing MifareUltralight...", e22);
-                return false;
+                if (nfca != null && nfca.isConnected()) {
+                    Log.i("JSAPI", "Closing after IOException");
+                    nfca.close();
+                    Log.i("JSAPI", "Closed");
+                }
+            } catch (IOException closeEx) {
+                Log.e("JSAPI", "IOException while closing after error...", closeEx);
             }
+            return false;
         } catch (Throwable th) {
+            Log.e("JSAPI", "Unexpected throwable in writeTag", th);
             try {
-                Log.i("JSAPI", "Closing");
-                nfca.close();
-                Log.i("JSAPI", "Closed");
-                return true;
+                if (nfca != null && nfca.isConnected()) {
+                    nfca.close();
+                }
             } catch (IOException e222) {
-                Log.e("JSAPI", "IOException while closing MifareUltralight...", e222);
-                return false;
+                Log.e("JSAPI", "IOException while closing after throwable...", e222);
             }
+            return false;
         }
     }
 
@@ -116,10 +153,8 @@ public class JSAPI {
         stringBuilder.append(methodName);
         stringBuilder.append("'))(");
         for (Object param : params) {
-            Object param2 = "";
-            if (!(param instanceof String)) {
-                param2 = param.toString();
-            }
+            // Always convert param to string so string params are passed through correctly
+            String param2 = (param == null) ? "" : param.toString();
             stringBuilder.append("'");
             stringBuilder.append(param2);
             stringBuilder.append("'");
