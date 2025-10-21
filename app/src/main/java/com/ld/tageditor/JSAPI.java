@@ -20,7 +20,6 @@ public class JSAPI {
 
     @JavascriptInterface
     public String readTag(byte page) {
-//        MifareUltralight mifare = MifareUltralight.get(this.activity.tag);
         if (this.activity == null) {
             Log.w("JSAPI", "readTag called but activity is null");
             return "";
@@ -51,7 +50,6 @@ public class JSAPI {
         try {
             Log.i("JSAPI", "Connecting");
             nfcA.connect();
-//            mifare.connect();
             Log.i("JSAPI", "Connected");
             Log.i("JSAPI", "Read");
 
@@ -60,7 +58,6 @@ public class JSAPI {
                     (byte)(page & 0xFF)
             };
 
-//            byte[] payload = mifare.readPages(page);
             byte[] payload = nfcA.transceive(message);
 //            Log.i("JSAPI", String.format("Payload %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X", new Object[]{Byte.valueOf(payload[0]), Byte.valueOf(payload[1]), Byte.valueOf(payload[2]), Byte.valueOf(payload[3]), Byte.valueOf(payload[4]), Byte.valueOf(payload[5]), Byte.valueOf(payload[6]), Byte.valueOf(payload[7]), Byte.valueOf(payload[8]), Byte.valueOf(payload[9]), Byte.valueOf(payload[10]), Byte.valueOf(payload[11]), Byte.valueOf(payload[12]), Byte.valueOf(payload[13]), Byte.valueOf(payload[14]), Byte.valueOf(mifare.readPages(page)[15])}));
             String encodeToString = Base64.encodeToString(payload, 0, 16, 0);
@@ -97,11 +94,9 @@ public class JSAPI {
             Log.w("JSAPI", "NfcA.get returned null for current tag (write)");
             return false;
         }
-//        MifareUltralight ultralight = MifareUltralight.get(this.activity.tag);
         try {
             Log.i("JSAPI", "Connecting");
             nfca.connect();
-//            ultralight.connect();
             Log.i("JSAPI", "Connected");
             Log.i("JSAPI", String.format("Writing %02X%02X%02X%02X", new Object[]{Byte.valueOf(data[0]), Byte.valueOf(data[1]), Byte.valueOf(data[2]), Byte.valueOf(data[3])}));
             byte[] message = new byte[] {
