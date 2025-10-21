@@ -7,14 +7,6 @@ plugins {
 
 android {
     namespace = 'com.ld.tageditor'
-    signingConfigs {
-        debug {
-            storeFile file('C:/Users/hamil/.keystore')
-            storePassword '19monkeys'
-            keyAlias 'key0'
-            keyPassword '19monkeys'
-        }
-    }
     compileSdk = 33
 
     defaultConfig {
@@ -28,12 +20,10 @@ android {
             useSupportLibrary = true
         }
 
-    def commit = 'git rev-parse --short HEAD'.execute().text.trim()
-    buildConfigField("String", "COMMIT", "\""+commit+"\"")
-    // archivesName is removed in newer AGP; set archivesBaseName via project property if needed
+        def commit = 'git rev-parse --short HEAD'.execute().text.trim()
+        buildConfigField("String", "COMMIT", "\""+commit+"\"")
     }
 
-    // enable generation of BuildConfig for custom buildConfigField entries
     buildFeatures {
         buildConfig = true
     }
@@ -42,32 +32,37 @@ android {
         abi {
             enable = true
             reset()
-            //include "arm64-v8a"
             universalApk true
         }
     }
 
     buildTypes {
         release {
-            //minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             initWith release
             debuggable true
             signingConfig signingConfigs.debug
+        }
+    }
+
+    signingConfigs {
+        debug {
+            // Use local Windows keystore path if available
             try {
                 def keystoreProps = new Properties()
                 keystoreProps.load(new FileInputStream(rootProject.file("keystore.properties")))
-                buildTypes.debug.signingConfig signingConfigs.debug
-                debug {
-                    // Use local Windows keystore path if available
-                    storeFile file('C:/Users/hamil/.keystore')
-                    keyAlias 'key0'
-                    keyPassword '19monkeys'
-                    storePassword '19monkeys'
-                }
-            } catch (FileNotFoundException ignored) { }
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            } catch (ignored) {
+                storeFile file('C:/Users/hamil/.keystore')
+                storePassword '19monkeys'
+                keyAlias 'key0'
+                keyPassword '19monkeys'
+            }
         }
     }
 
@@ -75,20 +70,17 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
     kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
         }
-    }
-    // Use Kotlin's JVM toolchain to compile with a compatible JDK (helps when system JAVA_HOME is newer)
-    kotlin {
         jvmToolchain(17)
     }
+
     lint {
         abortOnError false
     }
-
-    // Use the new variant API to set output filename if needed (kept default for now)
 }
 
 dependencies {
